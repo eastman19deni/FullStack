@@ -35,6 +35,7 @@ class Tag(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     projects: Mapped[list["Project"]] = relationship(
         secondary=project_tags, back_populates="tags"
