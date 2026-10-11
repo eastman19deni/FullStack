@@ -15,11 +15,7 @@ export const theme = createTheme({
     h6: { fontWeight: 600 },
   },
   components: {
-    MuiCard: {
-      styleOverrides: {
-        root: { borderRadius: 16 },
-      },
-    },
+    MuiCard: { styleOverrides: { root: { borderRadius: 16 } } },
     MuiButton: {
       defaultProps: { disableElevation: true },
       styleOverrides: { root: { textTransform: 'none', borderRadius: 10 } },

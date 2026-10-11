@@ -1,15 +1,23 @@
-import {
-  Box, Typography, Button, Divider, Paper, LinearProgress, Avatar,
-} from '@mui/material';
+import { Box, Typography, Button, Divider, Paper, LinearProgress, Avatar } from '@mui/material';
 import { Link as RouterLink, useParams } from 'react-router-dom';
-import StatusChip from '../components/StatusChip';
-import TagChip from '../components/TagChip';
-import { projects } from '../mocks/data';
+import { useAsync } from '../shared/lib/useAsync';
+import { projectApi } from '../entities/project/api';
+import StatusChip from '../shared/ui/StatusChip';
+import TagChip from '../entities/tag/ui/TagChip';
+import PageLoader from '../shared/ui/PageLoader';
+import ErrorState from '../shared/ui/ErrorState';
 
 export default function ProjectPage() {
   const { id } = useParams();
-  const project = projects.find((p) => p.id === Number(id));
+  const projectId = Number(id);
 
+  const { data: project, loading, error, refetch } = useAsync(
+    () => projectApi.getById(projectId),
+    [projectId],
+  );
+
+  if (loading) return <PageLoader />;
+  if (error) return <ErrorState message={error} onRetry={refetch} />;
   if (!project) {
     return (
       <Box>
@@ -43,7 +51,7 @@ export default function ProjectPage() {
                 {project.author.username[0].toUpperCase()}
               </Avatar>
               <Typography color="text.secondary">
-                {project.author.username} · {new Date(project.createdAt).toLocaleDateString()}
+                {project.author.username} · {new Date(project.createdAt).toLocaleDateString('ru-RU')}
               </Typography>
             </Box>
           </Box>
@@ -54,13 +62,14 @@ export default function ProjectPage() {
           {project.tags.map((t) => <TagChip key={t.id} tag={t} />)}
         </Box>
 
-        <Typography sx={{ whiteSpace: 'pre-line', mb: 3 }}>
-          {project.description}
-        </Typography>
+        <Typography sx={{ whiteSpace: 'pre-line', mb: 3 }}>{project.description}</Typography>
 
         <Divider sx={{ my: 3 }} />
 
         <Typography variant="h6" gutterBottom>Ищем роли</Typography>
+        {project.roles.length === 0 && (
+          <Typography color="text.secondary">Роли пока не указаны</Typography>
+        )}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           {project.roles.map((r) => {
             const progress = r.slots ? (r.filled / r.slots) * 100 : 0;
@@ -68,9 +77,7 @@ export default function ProjectPage() {
               <Box key={r.role.id}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography>{r.role.name}</Typography>
-                  <Typography color="text.secondary">
-                    {r.filled} / {r.slots}
-                  </Typography>
+                  <Typography color="text.secondary">{r.filled} / {r.slots}</Typography>
                 </Box>
                 <LinearProgress
                   variant="determinate"

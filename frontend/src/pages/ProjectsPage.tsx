@@ -1,20 +1,26 @@
-import { Box, Typography, TextField, InputAdornment } from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
-import { useMemo, useState } from 'react';
-import ProjectCard from '../components/ProjectCard';
-import { projects } from '../mocks/data';
+import { useState } from 'react';
+import { Box, Typography, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { useAsync } from '../shared/lib/useAsync';
+import { projectApi } from '../entities/project/api';
+import type { ProjectStatus } from '../entities/project/model/types';
+import ProjectCard from '../entities/project/ui/ProjectCard';
+import ProjectSearch from '../features/project-search/ui/ProjectSearch';
+import PageLoader from '../shared/ui/PageLoader';
+import ErrorState from '../shared/ui/ErrorState';
+import EmptyState from '../shared/ui/EmptyState';
+
+type Filter = 'all' | ProjectStatus;
 
 export default function ProjectsPage() {
   const [query, setQuery] = useState('');
+  const [filter, setFilter] = useState<Filter>('all');
 
-  const visible = useMemo(() => {
-    const q = query.toLowerCase();
-    return projects.filter(
-      (p) =>
-        p.title.toLowerCase().includes(q) ||
-        p.description.toLowerCase().includes(q),
-    );
-  }, [query]);
+  const { data, loading, error, refetch } = useAsync(
+    () => projectApi.list({ query, status: filter }),
+    [query, filter],
+  );
+
+  const visible = data ?? [];
 
   return (
     <Box>
@@ -34,27 +40,26 @@ export default function ProjectsPage() {
             Находите идеи и присоединяйтесь к командам
           </Typography>
         </Box>
-
-        <TextField
-          size="small"
-          placeholder="Поиск проектов"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            },
-          }}
-        />
+        <ProjectSearch value={query} onChange={setQuery} />
       </Box>
 
-      {visible.length === 0 ? (
-        <Typography color="text.secondary">Ничего не найдено</Typography>
-      ) : (
+      <ToggleButtonGroup
+        value={filter}
+        exclusive
+        onChange={(_, v: Filter | null) => v && setFilter(v)}
+        size="small"
+        sx={{ mb: 3 }}
+      >
+        <ToggleButton value="all">Все</ToggleButton>
+        <ToggleButton value="looking_for_roles">Ищем роли</ToggleButton>
+        <ToggleButton value="in_progress">Команда собрана</ToggleButton>
+        <ToggleButton value="completed">Закрытые</ToggleButton>
+      </ToggleButtonGroup>
+
+      {loading && <PageLoader />}
+      {error && <ErrorState message={error} onRetry={refetch} />}
+      {!loading && !error && visible.length === 0 && <EmptyState text="Ничего не найдено" />}
+      {!loading && !error && visible.length > 0 && (
         <Box
           sx={{
             display: 'grid',

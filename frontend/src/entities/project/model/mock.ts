@@ -1,4 +1,5 @@
 import type { Project } from './types';
+import type { Tag } from '../../tag/model/types';
 
 export const mockProjects: Project[] = [
   {
@@ -50,7 +51,7 @@ export const mockProjects: Project[] = [
   },
 ];
 
-export const allTags = [
+export const allTags: Tag[] = [
   { id: 1, name: 'Web' },
   { id: 2, name: 'AI' },
   { id: 3, name: 'Mobile' },
