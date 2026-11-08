@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, Typography, ToggleButton, ToggleButtonGroup } from '@mui/material';
+import { Box, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { useAsync } from '../shared/lib/useAsync';
 import { projectApi } from '../entities/project/api';
 import type { ProjectStatus } from '../entities/project/model/types';

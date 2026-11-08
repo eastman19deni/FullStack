@@ -1,9 +1,9 @@
 from datetime import datetime
-from sqlalchemy import String, Text, DateTime, ForeignKey, Table, Column, func
+
+from sqlalchemy import Column, DateTime, ForeignKey, String, Table, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.db.db import Base
-
+from app.db import Base
 
 project_tags = Table(
     "project_tags",
@@ -19,15 +19,12 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     email: Mapped[str] = mapped_column(String(255), unique=True, index=True)
     username: Mapped[str] = mapped_column(String(64), unique=True, index=True)
-    password_hash: Mapped[str] = mapped_column(String(255), default="")
+    password_hash: Mapped[str] = mapped_column(String(255))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    projects: Mapped[list["Project"]] = relationship(
-        back_populates="author", cascade="all, delete-orphan"
-    )
-    applications: Mapped[list["Application"]] = relationship(
-        back_populates="user", cascade="all, delete-orphan"
-    )
+    projects: Mapped[list["Project"]] = relationship(back_populates="author", cascade="all, delete-orphan")
+    applications: Mapped[list["Application"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+    refresh_tokens: Mapped[list["RefreshToken"]] = relationship(back_populates="user", cascade="all, delete-orphan")
 
 
 class Tag(Base):
@@ -36,9 +33,7 @@ class Tag(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String(64), unique=True, index=True)
 
-    projects: Mapped[list["Project"]] = relationship(
-        secondary=project_tags, back_populates="tags"
-    )
+    projects: Mapped[list["Project"]] = relationship(secondary=project_tags, back_populates="tags")
 
 
 class Project(Base):
@@ -52,23 +47,32 @@ class Project(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     author: Mapped["User"] = relationship(back_populates="projects")
-    tags: Mapped[list["Tag"]] = relationship(
-        secondary=project_tags, back_populates="projects"
-    )
-    applications: Mapped[list["Application"]] = relationship(
-        back_populates="project", cascade="all, delete-orphan"
-    )
+    tags: Mapped[list["Tag"]] = relationship(secondary=project_tags, back_populates="projects")
+    applications: Mapped[list["Application"]] = relationship(back_populates="project", cascade="all, delete-orphan")
 
 
 class Application(Base):
     __tablename__ = "applications"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"))
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
+    project_id: Mapped[int] = mapped_column(ForeignKey("projects.id", ondelete="CASCADE"), index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     message: Mapped[str] = mapped_column(Text, default="")
     status: Mapped[str] = mapped_column(String(32), default="pending")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     project: Mapped["Project"] = relationship(back_populates="applications")
     user: Mapped["User"] = relationship(back_populates="applications")
+
+
+class RefreshToken(Base):
+    __tablename__ = "refresh_tokens"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    token_hash: Mapped[str] = mapped_column(String(255), unique=True, index=True)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    revoked: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    user: Mapped["User"] = relationship(back_populates="refresh_tokens")

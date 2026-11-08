@@ -1,4 +1,4 @@
-import { Card, CardActionArea, CardContent, Box, Typography } from '@mui/material';
+import { Box, Card, CardActionArea, CardContent, Typography } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import type { Project } from '../model/types';
 import StatusChip from '../../../shared/ui/StatusChip';

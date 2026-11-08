@@ -1,4 +1,4 @@
-import { Box, Typography, Button, Divider, Paper, LinearProgress, Avatar } from '@mui/material';
+import { Avatar, Box, Button, Divider, LinearProgress, Paper, Typography } from '@mui/material';
 import { Link as RouterLink, useParams } from 'react-router-dom';
 import { useAsync } from '../shared/lib/useAsync';
 import { projectApi } from '../entities/project/api';
@@ -6,6 +6,7 @@ import StatusChip from '../shared/ui/StatusChip';
 import TagChip from '../entities/tag/ui/TagChip';
 import PageLoader from '../shared/ui/PageLoader';
 import ErrorState from '../shared/ui/ErrorState';
+import ApplyButton from '../features/project-apply/ui/ApplyButton';
 
 export default function ProjectPage() {
   const { id } = useParams();
@@ -91,7 +92,7 @@ export default function ProjectPage() {
 
         <Divider sx={{ my: 3 }} />
 
-        <Button variant="contained">Откликнуться</Button>
+        <ApplyButton projectId={project.id} />
       </Paper>
     </Box>
   );

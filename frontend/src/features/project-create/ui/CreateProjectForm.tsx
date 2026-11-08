@@ -1,26 +1,31 @@
 import { useState } from 'react';
-import { Box, TextField, Button, Paper, MenuItem } from '@mui/material';
+import { Alert, Box, Button, MenuItem, Paper, TextField } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { projectApi } from '../../../entities/project/api';
-import { allTags } from '../../../entities/project/model/mock';
+import { tagApi } from '../../../entities/tag/api';
+import { useAsync } from '../../../shared/lib/useAsync';
 
 export default function CreateProjectForm() {
   const navigate = useNavigate();
+  const { data: tags, loading: tagsLoading, error: tagsError } = useAsync(() => tagApi.list(), []);
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [tagIds, setTagIds] = useState<number[]>([]);
   const [errors, setErrors] = useState<{ title?: string; description?: string }>({});
+  const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   const validate = () => {
     const e: typeof errors = {};
-    if (!title.trim()) e.title = 'Укажите название';
+    if (title.trim().length < 3) e.title = 'Минимум 3 символа';
     if (description.trim().length < 20) e.description = 'Минимум 20 символов';
     setErrors(e);
     return Object.keys(e).length === 0;
   };
 
   const handleSubmit = async () => {
+    setServerError(null);
     if (!validate()) return;
     setSubmitting(true);
     try {
@@ -28,19 +33,23 @@ export default function CreateProjectForm() {
         title: title.trim(),
         description: description.trim(),
         tagIds,
-        roleIds: [],
       });
       navigate(`/projects/${created.id}`);
-    } catch {
-      setErrors({ description: 'Не удалось создать проект' });
+    } catch (err) {
+      setServerError(err instanceof Error ? err.message : 'Не удалось создать проект');
     } finally {
       setSubmitting(false);
     }
   };
 
+  const allTags = tags ?? [];
+
   return (
     <Paper variant="outlined" sx={{ p: 3, borderRadius: 3 }}>
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+        {serverError && <Alert severity="error">{serverError}</Alert>}
+        {tagsError && <Alert severity="warning">Не удалось загрузить теги: {tagsError}</Alert>}
+
         <TextField
           label="Название"
           value={title}
@@ -63,10 +72,8 @@ export default function CreateProjectForm() {
           select
           label="Теги"
           value={tagIds}
-          onChange={(e) => {
-            const v = e.target.value as unknown;
-            setTagIds(typeof v === 'string' ? v.split(',').map(Number) : (v as number[]));
-          }}
+          disabled={tagsLoading}
+          onChange={(e) => setTagIds(e.target.value as number[])}
           slotProps={{
             select: {
               multiple: true,

@@ -1,4 +1,4 @@
-import { TextField, InputAdornment } from '@mui/material';
+import { InputAdornment, TextField } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 
 interface Props {

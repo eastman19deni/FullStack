@@ -2,7 +2,8 @@ fastapi
 uvicorn[standard]
 sqlalchemy
 psycopg2-binary
-alembic
 pydantic
 pydantic-settings
-python-dotenv
+email-validator
+bcrypt
+python-jose[cryptography]==3.3.0
